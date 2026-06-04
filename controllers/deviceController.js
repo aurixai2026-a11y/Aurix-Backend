@@ -22,7 +22,10 @@ const listDevices = db.prepare(`
     device_id,
     computer_name,
     version,
-    status,
+    CASE
+      WHEN last_seen >= datetime('now', '-60 seconds') THEN 'online'
+      ELSE 'offline'
+    END AS status,
     strftime('%Y-%m-%dT%H:%M:%SZ', last_seen) AS last_seen
   FROM devices
   ORDER BY last_seen DESC
