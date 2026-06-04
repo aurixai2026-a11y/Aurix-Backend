@@ -1,5 +1,6 @@
 const express = require("express");
 const deviceController = require("./controllers/deviceController");
+const { requireAdmin } = require("./middleware/adminAuth");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -30,8 +31,9 @@ function corsMiddleware(req, res, next) {
 app.use(corsMiddleware);
 app.use(express.json());
 
+app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/device", require("./routes/deviceRoutes"));
-app.get("/api/devices", deviceController.list);
+app.get("/api/devices", requireAdmin, deviceController.list);
 app.use("/api/user", require("./routes/userRoutes"));
 
 app.listen(PORT, () => {

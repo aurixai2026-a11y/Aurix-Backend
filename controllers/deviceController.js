@@ -18,7 +18,12 @@ const heartbeatDevice = db.prepare(`
 `);
 
 const listDevices = db.prepare(`
-  SELECT device_id, computer_name, version
+  SELECT
+    device_id,
+    computer_name,
+    version,
+    status,
+    strftime('%Y-%m-%dT%H:%M:%SZ', last_seen) AS last_seen
   FROM devices
   ORDER BY last_seen DESC
 `);
