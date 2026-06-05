@@ -34,13 +34,17 @@ async function ensureDefaultAdmin() {
   try {
     const existingAdmin = await UserModel.getAdminUser();
     if (!existingAdmin) {
-      await UserModel.createAdminUser("admin", hashPassword("admin123"));
+      console.log("ℹ️  No admin found. Creating default admin...");
+      const hashed = hashPassword("admin123");
+      console.log("ℹ️  Password hash created");
+      await UserModel.createAdminUser("admin", hashed);
       console.log("✓ Default admin created (username: admin, password: admin123)");
     } else {
-      console.log("✓ Default admin already exists");
+      console.log("✓ Default admin already exists:", existingAdmin.username);
     }
   } catch (error) {
-    console.error("Error ensuring default admin:", error.message);
+    console.error("❌ Error ensuring default admin:", error.message);
+    console.error(error);
   }
 }
 
