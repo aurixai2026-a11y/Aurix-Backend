@@ -105,8 +105,6 @@ async function updateAdminSettings(adminId, username, password) {
   return updatedAdmin;
 }
 
-ensureDefaultAdmin();
-
 module.exports = {
   hashPassword,
   verifyPassword,
@@ -114,5 +112,6 @@ module.exports = {
   createSession,
   deleteSession,
   getSessionUser,
-  updateAdminSettings
+  updateAdminSettings,
+  ensureDefaultAdmin
 };

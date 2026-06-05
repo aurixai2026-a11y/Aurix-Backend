@@ -2,8 +2,6 @@ const { MongoClient } = require("mongodb");
 
 const MONGO_URI = process.env.MONGO_URI || 
 "mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.3abairk.mongodb.net/aurix?retryWrites=true&w=majority&appName=Aurix";
-// const MONGO_URI =process.env.MONGODB_URI || 'mongodb+srv://bpavan422_db_user:s5mIhGPgtgF7F9TH@grozo-cluster.asew17j.mongodb.net/?appName=grozo-cluster'; // Replace with your MongoDB Atlas URI
-// const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.mongodb.net/aurix?retryWrites=true&w=majority";
 const DB_NAME = "aurix";
 
 // Log connection info (mask sensitive data)
@@ -71,8 +69,16 @@ async function initializeCollections() {
 
     const logsCol = db.collection("logs");
     await logsCol.createIndex({ device_id: 1 });
-    await logsCol.createIndex({ created_at: 1 });
-    await logsCol.createIndex({ created_at: 1 }, { expireAfterSeconds: 2592000 }); // 30 days
+    
+    // Drop existing created_at index if it exists (to avoid conflict)
+    try {
+      await logsCol.dropIndex("created_at_1");
+    } catch (err) {
+      // Index doesn't exist yet, that's fine
+    }
+    
+    // Create TTL index for 30-day log retention
+    await logsCol.createIndex({ created_at: 1 }, { expireAfterSeconds: 2592000 });
 
     console.log("✓ MongoDB indexes created");
   } catch (error) {
