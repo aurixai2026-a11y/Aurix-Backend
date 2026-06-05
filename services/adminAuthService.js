@@ -32,19 +32,23 @@ function verifyPassword(password, storedHash) {
 
 async function ensureDefaultAdmin() {
   try {
+    console.log("📝 Checking for existing admin user...");
     const existingAdmin = await UserModel.getAdminUser();
+    
     if (!existingAdmin) {
-      console.log("ℹ️  No admin found. Creating default admin...");
-      const hashed = hashPassword("admin123");
-      console.log("ℹ️  Password hash created");
-      await UserModel.createAdminUser("admin", hashed);
-      console.log("✓ Default admin created (username: admin, password: admin123)");
+      console.log("🔐 No admin found, creating default admin (admin/admin123)...");
+      const hashedPassword = hashPassword("admin123");
+      console.log("🔐 Password hashed:", hashedPassword.substring(0, 20) + "...");
+      
+      const newAdmin = await UserModel.createAdminUser("admin", hashedPassword);
+      console.log("✓ Default admin created successfully", newAdmin._id);
     } else {
-      console.log("✓ Default admin already exists:", existingAdmin.username);
+      console.log("✓ Admin user exists:", existingAdmin.username, existingAdmin._id);
     }
   } catch (error) {
     console.error("❌ Error ensuring default admin:", error.message);
-    console.error(error);
+    console.error("Stack trace:", error.stack);
+    throw error; // Re-throw to let server know initialization failed
   }
 }
 
@@ -84,13 +88,37 @@ async function getSessionUser(token) {
 }
 
 async function authenticateAdmin(username, password) {
-  const admin = await UserModel.getAdminUser();
-
-  if (!admin || admin.username !== username || !verifyPassword(password, admin.password_hash)) {
+  try {
+    console.log("🔐 Attempting authentication for username:", username);
+    const admin = await UserModel.getAdminUser();
+    
+    if (!admin) {
+      console.log("❌ No admin user found in database");
+      return null;
+    }
+    
+    console.log("✓ Found admin user:", admin.username);
+    
+    if (admin.username !== username) {
+      console.log("❌ Username mismatch. Expected:", admin.username, "Got:", username);
+      return null;
+    }
+    
+    console.log("✓ Username matches");
+    
+    const passwordValid = verifyPassword(password, admin.password_hash);
+    console.log("✓ Password verification:", passwordValid ? "PASSED" : "FAILED");
+    
+    if (!passwordValid) {
+      return null;
+    }
+    
+    console.log("✓ Authentication successful for:", username);
+    return admin;
+  } catch (error) {
+    console.error("❌ Authentication error:", error.message);
     return null;
   }
-
-  return admin;
 }
 
 async function updateAdminSettings(adminId, username, password) {
