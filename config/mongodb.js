@@ -1,6 +1,8 @@
 const { MongoClient } = require("mongodb");
 
-const MONGO_URI =process.env.MONGODB_URI || 'mongodb+srv://bpavan422_db_user:s5mIhGPgtgF7F9TH@grozo-cluster.asew17j.mongodb.net/?appName=grozo-cluster'; // Replace with your MongoDB Atlas URI
+const MONGO_URI = process.env.MONGO_URI || 
+"mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.3abairk.mongodb.net/aurix?retryWrites=true&w=majority&appName=Aurix";
+// const MONGO_URI =process.env.MONGODB_URI || 'mongodb+srv://bpavan422_db_user:s5mIhGPgtgF7F9TH@grozo-cluster.asew17j.mongodb.net/?appName=grozo-cluster'; // Replace with your MongoDB Atlas URI
 // const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.mongodb.net/aurix?retryWrites=true&w=majority";
 const DB_NAME = "aurix";
 
