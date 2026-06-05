@@ -30,18 +30,18 @@ function verifyPassword(password, storedHash) {
   return crypto.timingSafeEqual(expected, actual);
 }
 
-function ensureDefaultAdmin() {
-  (async () => {
-    try {
-      const existingAdmin = await UserModel.getAdminUser();
-      if (!existingAdmin) {
-        await UserModel.createAdminUser("admin", hashPassword("admin123"));
-        console.log("✓ Default admin created (username: admin, password: admin123)");
-      }
-    } catch (error) {
-      console.error("Error ensuring default admin:", error.message);
+async function ensureDefaultAdmin() {
+  try {
+    const existingAdmin = await UserModel.getAdminUser();
+    if (!existingAdmin) {
+      await UserModel.createAdminUser("admin", hashPassword("admin123"));
+      console.log("✓ Default admin created (username: admin, password: admin123)");
+    } else {
+      console.log("✓ Default admin already exists");
     }
-  })();
+  } catch (error) {
+    console.error("Error ensuring default admin:", error.message);
+  }
 }
 
 function createSession(userId) {

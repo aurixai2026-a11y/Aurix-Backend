@@ -50,11 +50,13 @@ app.get("/health", (req, res) => {
 // Start server with MongoDB connection
 async function startServer() {
   try {
+    console.log("🔄 Connecting to MongoDB...");
     // Connect to MongoDB
     await connectDB();
     
+    console.log("🔄 Ensuring default admin...");
     // Ensure default admin exists
-    ensureDefaultAdmin();
+    await ensureDefaultAdmin();
 
     app.listen(PORT, () => {
       console.log(`✓ Aurix Backend Running on port ${PORT}`);

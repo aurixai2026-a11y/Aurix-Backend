@@ -3,6 +3,11 @@ const { MongoClient } = require("mongodb");
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.mongodb.net/aurix?retryWrites=true&w=majority";
 const DB_NAME = "aurix";
 
+// Log connection info (mask sensitive data)
+if (process.env.NODE_ENV === "production" && !process.env.MONGO_URI) {
+  console.warn("⚠️  WARNING: Using default MongoDB URI. For production, set MONGO_URI environment variable.");
+}
+
 let db = null;
 let client = null;
 
@@ -14,9 +19,9 @@ async function connectDB() {
     }
 
     client = new MongoClient(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      maxPoolSize: 10
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: "majority"
     });
 
     await client.connect();
@@ -30,6 +35,12 @@ async function connectDB() {
     return db;
   } catch (error) {
     console.error("✗ MongoDB connection failed:", error.message);
+    console.error("\n🔧 Troubleshooting:");
+    console.error("1. Verify MONGO_URI environment variable is set");
+    console.error("2. Check MongoDB Atlas cluster is running");
+    console.error("3. Verify IP whitelist includes your server's IP");
+    console.error("4. Ensure cluster has public access enabled");
+    console.error("5. Test connection string manually\n");
     process.exit(1);
   }
 }
