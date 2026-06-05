@@ -1,6 +1,9 @@
 const express = require("express");
+const { connectDB, closeDB } = require("./config/mongodb");
+const { ensureDefaultAdmin } = require("./services/adminAuthService");
 const deviceController = require("./controllers/deviceController");
 const { requireAdmin } = require("./middleware/adminAuth");
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -31,11 +34,43 @@ function corsMiddleware(req, res, next) {
 app.use(corsMiddleware);
 app.use(express.json());
 
+// Routes
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/device", require("./routes/deviceRoutes"));
+app.use("/api/log", require("./routes/logRoutes"));
+app.use("/api/updates", require("./routes/updateRoutes"));
 app.get("/api/devices", requireAdmin, deviceController.list);
 app.use("/api/user", require("./routes/userRoutes"));
 
-app.listen(PORT, () => {
-  console.log(`Aurix Backend Running on port ${PORT}`);
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date() });
 });
+
+// Start server with MongoDB connection
+async function startServer() {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    
+    // Ensure default admin exists
+    ensureDefaultAdmin();
+
+    app.listen(PORT, () => {
+      console.log(`✓ Aurix Backend Running on port ${PORT}`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+
+    // Handle graceful shutdown
+    process.on("SIGINT", async () => {
+      console.log("\n✓ Shutting down gracefully...");
+      await closeDB();
+      process.exit(0);
+    });
+  } catch (error) {
+    console.error("✗ Failed to start server:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();

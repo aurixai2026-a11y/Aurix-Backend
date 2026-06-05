@@ -11,20 +11,26 @@ function getBearerToken(req) {
   return token;
 }
 
-function requireAdmin(req, res, next) {
-  const token = getBearerToken(req);
-  const admin = token ? getSessionUser(token) : null;
+async function requireAdmin(req, res, next) {
+  try {
+    const token = getBearerToken(req);
+    const admin = token ? await getSessionUser(token) : null;
 
-  if (!admin) {
+    if (!admin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    req.admin = admin;
+    req.adminToken = token;
+
+    return next();
+  } catch (error) {
+    console.error("Auth middleware error:", error);
     return res.status(401).json({ error: "Unauthorized" });
   }
-
-  req.admin = admin;
-  req.adminToken = token;
-
-  return next();
 }
 
 module.exports = {
   requireAdmin
 };
+

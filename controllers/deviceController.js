@@ -1,78 +1,97 @@
-const db = require("../config/database");
+const DeviceModel = require("../models/DeviceModel");
 
-const registerDevice = db.prepare(`
-  INSERT INTO devices (device_id, computer_name, os_name, version, status, last_seen)
-  VALUES (?, ?, ?, ?, 'online', CURRENT_TIMESTAMP)
-  ON CONFLICT(device_id) DO UPDATE SET
-    computer_name = excluded.computer_name,
-    os_name = excluded.os_name,
-    version = excluded.version,
-    status = 'online',
-    last_seen = CURRENT_TIMESTAMP
-`);
+async function register(req, res) {
+  try {
+    const { device_id, computer_name, version, os } = req.body;
 
-const heartbeatDevice = db.prepare(`
-  UPDATE devices
-  SET status = 'online', last_seen = CURRENT_TIMESTAMP
-  WHERE device_id = ?
-`);
+    if (!device_id) {
+      return res.status(400).json({ error: "device_id is required" });
+    }
 
-const listDevices = db.prepare(`
-  SELECT
-    device_id,
-    computer_name,
-    version,
-    CASE
-      WHEN last_seen >= datetime('now', '-60 seconds') THEN 'online'
-      ELSE 'offline'
-    END AS status,
-    strftime('%Y-%m-%dT%H:%M:%SZ', last_seen) AS last_seen
-  FROM devices
-  ORDER BY last_seen DESC
-`);
+    await DeviceModel.registerDevice(device_id, computer_name || null, os || null, version || null);
 
-const insertLog = db.prepare(`
-  INSERT INTO logs (device_id, action, created_at)
-  VALUES (?, ?, CURRENT_TIMESTAMP)
-`);
-
-function register(req, res) {
-  const { device_id, computer_name, version, os } = req.body;
-
-  if (!device_id) {
-    return res.status(400).json({ error: "device_id is required" });
+    return res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("Register error:", error);
+    return res.status(500).json({ error: "Failed to register device" });
   }
-
-  registerDevice.run(device_id, computer_name || null, os || null, version || null);
-  insertLog.run(device_id, "register");
-
-  return res.status(201).json({ success: true });
 }
 
-function heartbeat(req, res) {
-  const { device_id } = req.body;
+async function heartbeat(req, res) {
+  try {
+    const { device_id } = req.body;
 
-  if (!device_id) {
-    return res.status(400).json({ error: "device_id is required" });
+    if (!device_id) {
+      return res.status(400).json({ error: "device_id is required" });
+    }
+
+    await DeviceModel.heartbeatDevice(device_id);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error.message === "Device not found") {
+      return res.status(404).json({ error: "device not found" });
+    }
+    console.error("Heartbeat error:", error);
+    return res.status(500).json({ error: "Failed to update heartbeat" });
   }
-
-  const result = heartbeatDevice.run(device_id);
-
-  if (result.changes === 0) {
-    return res.status(404).json({ error: "device not found" });
-  }
-
-  insertLog.run(device_id, "heartbeat");
-
-  return res.json({ success: true });
 }
 
-function list(req, res) {
-  return res.json(listDevices.all());
+async function list(req, res) {
+  try {
+    const devices = await DeviceModel.listDevices();
+    return res.json({ devices });
+  } catch (error) {
+    console.error("List devices error:", error);
+    return res.status(500).json({ error: "Failed to list devices" });
+  }
+}
+
+async function getDevice(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "device ID is required" });
+    }
+
+    const device = await DeviceModel.getDeviceById(id);
+
+    if (!device) {
+      return res.status(404).json({ error: "Device not found" });
+    }
+
+    return res.json(device);
+  } catch (error) {
+    console.error("Get device error:", error);
+    return res.status(500).json({ error: "Failed to get device" });
+  }
+}
+
+async function deleteDevice(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "device ID is required" });
+    }
+
+    await DeviceModel.deleteDevice(id);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error.message === "Device not found") {
+      return res.status(404).json({ error: "Device not found" });
+    }
+    console.error("Delete device error:", error);
+    return res.status(500).json({ error: "Failed to delete device" });
+  }
 }
 
 module.exports = {
   register,
   heartbeat,
-  list
+  list,
+  getDevice,
+  deleteDevice
 };

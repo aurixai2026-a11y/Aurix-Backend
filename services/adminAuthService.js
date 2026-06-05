@@ -1,26 +1,9 @@
 const crypto = require("crypto");
-const db = require("../config/database");
+const UserModel = require("../models/UserModel");
+const { ObjectId } = require("mongodb");
 
 const SESSION_DURATION_MS = 12 * 60 * 60 * 1000;
 const sessions = new Map();
-
-const getAdminUser = db.prepare(`
-  SELECT id, username, password_hash
-  FROM users
-  ORDER BY id
-  LIMIT 1
-`);
-
-const insertAdminUser = db.prepare(`
-  INSERT INTO users (username, email, password_hash)
-  VALUES (?, NULL, ?)
-`);
-
-const updateAdminUser = db.prepare(`
-  UPDATE users
-  SET username = ?, password_hash = ?
-  WHERE id = ?
-`);
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -48,11 +31,17 @@ function verifyPassword(password, storedHash) {
 }
 
 function ensureDefaultAdmin() {
-  const existingAdmin = getAdminUser.get();
-
-  if (!existingAdmin) {
-    insertAdminUser.run("admin", hashPassword("admin123"));
-  }
+  (async () => {
+    try {
+      const existingAdmin = await UserModel.getAdminUser();
+      if (!existingAdmin) {
+        await UserModel.createAdminUser("admin", hashPassword("admin123"));
+        console.log("✓ Default admin created (username: admin, password: admin123)");
+      }
+    } catch (error) {
+      console.error("Error ensuring default admin:", error.message);
+    }
+  })();
 }
 
 function createSession(userId) {
@@ -68,7 +57,7 @@ function deleteSession(token) {
   sessions.delete(token);
 }
 
-function getSessionUser(token) {
+async function getSessionUser(token) {
   const session = sessions.get(token);
 
   if (!session) {
@@ -80,9 +69,9 @@ function getSessionUser(token) {
     return null;
   }
 
-  const admin = getAdminUser.get();
+  const admin = await UserModel.getAdminUser();
 
-  if (!admin || admin.id !== session.userId) {
+  if (!admin || admin._id.toString() !== session.userId.toString()) {
     sessions.delete(token);
     return null;
   }
@@ -90,8 +79,8 @@ function getSessionUser(token) {
   return admin;
 }
 
-function authenticateAdmin(username, password) {
-  const admin = getAdminUser.get();
+async function authenticateAdmin(username, password) {
+  const admin = await UserModel.getAdminUser();
 
   if (!admin || admin.username !== username || !verifyPassword(password, admin.password_hash)) {
     return null;
@@ -100,25 +89,30 @@ function authenticateAdmin(username, password) {
   return admin;
 }
 
-function updateAdminSettings(adminId, username, password) {
-  const currentAdmin = getAdminUser.get();
+async function updateAdminSettings(adminId, username, password) {
+  const currentAdmin = await UserModel.getAdminUser();
 
-  if (!currentAdmin || currentAdmin.id !== adminId) {
+  if (!currentAdmin || currentAdmin._id.toString() !== adminId.toString()) {
     return null;
   }
 
-  updateAdminUser.run(username, hashPassword(password), adminId);
+  const updatedAdmin = await UserModel.updateAdminUser(
+    currentAdmin._id,
+    username,
+    hashPassword(password)
+  );
 
-  return getAdminUser.get();
+  return updatedAdmin;
 }
 
 ensureDefaultAdmin();
 
 module.exports = {
+  hashPassword,
+  verifyPassword,
   authenticateAdmin,
   createSession,
   deleteSession,
   getSessionUser,
-  updateAdminSettings,
-  verifyPassword
+  updateAdminSettings
 };
