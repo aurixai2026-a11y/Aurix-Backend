@@ -34,7 +34,7 @@ async function registerDevice(device_id, computer_name, os_name, version) {
 async function heartbeatDevice(device_id) {
   const db = getDB();
   const devicesCol = db.collection("devices");
-  const logsCol = db.collection("logs");
+  const heartbeatsCol = db.collection("heartbeats");
 
   const result = await devicesCol.updateOne(
     { device_id },
@@ -51,7 +51,7 @@ async function heartbeatDevice(device_id) {
   }
 
   // Log the heartbeat
-  await logsCol.insertOne({
+  await heartbeatsCol.insertOne({
     device_id,
     action: "heartbeat",
     created_at: new Date()
