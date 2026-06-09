@@ -49,7 +49,7 @@ async function connectDB() {
 async function initializeCollections() {
   try {
     // Create collections if they don't exist
-    const collections = ["devices", "users", "logs", "updates"];
+    const collections = ["devices", "users", "logs", "updates", "chats"];
     
     for (const collName of collections) {
       const exists = await db.listCollections({ name: collName }).hasNext();
@@ -69,6 +69,8 @@ async function initializeCollections() {
 
     const logsCol = db.collection("logs");
     await logsCol.createIndex({ device_id: 1 });
+    const chatsCol = db.collection("chats");
+    await chatsCol.createIndex({ updated_at: -1 });
     
     // Drop existing created_at index if it exists (to avoid conflict)
     try {

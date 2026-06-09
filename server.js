@@ -41,6 +41,7 @@ app.use("/api/log", require("./routes/logRoutes"));
 app.use("/api/updates", require("./routes/updateRoutes"));
 app.get("/api/devices", requireAdmin, deviceController.list);
 app.use("/api/user", require("./routes/userRoutes"));
+app.use("/api/chat", require("./routes/chatRoutes"));
 
 // Health check
 app.get("/health", (req, res) => {
