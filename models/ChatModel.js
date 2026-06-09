@@ -57,10 +57,35 @@ async function deleteChat(id) {
   return result.deletedCount > 0;
 }
 
+async function updateChat(id, data = {}) {
+  const db = getDB();
+  const chats = db.collection("chats");
+
+  const update = { $set: { updated_at: new Date() } };
+
+  if (typeof data.title === 'string') {
+    update.$set.title = data.title;
+  }
+
+  if (Array.isArray(data.messages)) {
+    update.$set.messages = data.messages;
+  }
+
+  const result = await chats.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    update,
+    { returnDocument: 'after' }
+  );
+
+  return result.value;
+}
+
 module.exports = {
   createChat,
   addMessage,
   listChats,
   getChatById,
   deleteChat
+  ,
+  updateChat
 };
