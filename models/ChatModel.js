@@ -1,13 +1,14 @@
 const { getDB } = require("../config/mongodb");
 const { ObjectId } = require("mongodb");
 
-async function createChat(title, messages = []) {
+async function createChat(title, messages = [], device_id = null) {
   const db = getDB();
   const chats = db.collection("chats");
 
   const doc = {
     title: title || "Untitled Chat",
     messages,
+    device_id: device_id || null,
     created_at: new Date(),
     updated_at: new Date()
   };
@@ -29,11 +30,14 @@ async function addMessage(chatId, message) {
   return result.value;
 }
 
-async function listChats(limit = 50, skip = 0) {
+async function listChats(limit = 50, skip = 0, device_id = null) {
   const db = getDB();
   const chats = db.collection("chats");
 
-  const items = await chats.find()
+  const query = {};
+  if (device_id) query.device_id = device_id;
+
+  const items = await chats.find(query)
     .sort({ updated_at: -1 })
     .skip(parseInt(skip))
     .limit(parseInt(limit))
@@ -57,35 +61,10 @@ async function deleteChat(id) {
   return result.deletedCount > 0;
 }
 
-async function updateChat(id, data = {}) {
-  const db = getDB();
-  const chats = db.collection("chats");
-
-  const update = { $set: { updated_at: new Date() } };
-
-  if (typeof data.title === 'string') {
-    update.$set.title = data.title;
-  }
-
-  if (Array.isArray(data.messages)) {
-    update.$set.messages = data.messages;
-  }
-
-  const result = await chats.findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    update,
-    { returnDocument: 'after' }
-  );
-
-  return result.value;
-}
-
 module.exports = {
   createChat,
   addMessage,
   listChats,
   getChatById,
   deleteChat
-  ,
-  updateChat
 };

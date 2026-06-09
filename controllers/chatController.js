@@ -2,8 +2,8 @@ const ChatModel = require("../models/ChatModel");
 
 async function createChat(req, res) {
   try {
-    const { title, messages } = req.body;
-    const chat = await ChatModel.createChat(title, Array.isArray(messages) ? messages : []);
+    const { title, messages, device_id } = req.body;
+    const chat = await ChatModel.createChat(title, Array.isArray(messages) ? messages : [], device_id || null);
     return res.status(201).json(chat);
   } catch (error) {
     console.error("Create chat error:", error);
@@ -26,8 +26,8 @@ async function addMessage(req, res) {
 
 async function listChats(req, res) {
   try {
-    const { limit = 50, skip = 0 } = req.query;
-    const items = await ChatModel.listChats(limit, skip);
+    const { limit = 50, skip = 0, device_id = null } = req.query;
+    const items = await ChatModel.listChats(limit, skip, device_id);
     return res.json({ chats: items });
   } catch (error) {
     console.error("List chats error:", error);
@@ -59,31 +59,10 @@ async function deleteChat(req, res) {
   }
 }
 
-async function updateChat(req, res) {
-  try {
-    const { id } = req.params;
-    const { title, messages } = req.body;
-
-    // At least one of title or messages should be provided
-    if (typeof title === 'undefined' && typeof messages === 'undefined') {
-      return res.status(400).json({ error: 'title or messages required' });
-    }
-
-    const updated = await ChatModel.updateChat(id, { title, messages });
-    if (!updated) return res.status(404).json({ error: 'Chat not found' });
-    return res.json(updated);
-  } catch (error) {
-    console.error('Update chat error:', error);
-    return res.status(500).json({ error: 'Failed to update chat' });
-  }
-}
-
 module.exports = {
   createChat,
   addMessage,
   listChats,
   getChat,
   deleteChat
-  ,
-  updateChat
 };
