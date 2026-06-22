@@ -16,7 +16,11 @@ async function registerDevice(device_id, computer_name, os_name, version, userna
         version: version || null,
         username: username || null,
         email: email || null,
-        subscriptions: Array.isArray(subscriptions) ? subscriptions : [],
+        // Ensure at least the default free subscription is present
+        subscriptions: Array.isArray(subscriptions) && subscriptions.length > 0 ? subscriptions : ["Aurix Free"],
+        // store a simple plan/renewal fields for quick UI use
+        subscription_plan: Array.isArray(subscriptions) && subscriptions.length > 0 ? subscriptions[0] : "Aurix Free",
+        subscription_renew: "N/A",
         is_online: true,
         last_seen: new Date()
       }
