@@ -5,6 +5,14 @@ async function registerDevice(device_id, computer_name, os_name, version, userna
   const db = getDB();
   const devicesCol = db.collection("devices");
   const logsCol = db.collection("logs");
+  // Normalize subscriptions into objects { plan, renew }
+  const normalizedSubs = Array.isArray(subscriptions) && subscriptions.length > 0
+    ? subscriptions.map((s) => {
+        if (typeof s === 'string') return { plan: s, renew: 'N/A' };
+        if (s && typeof s === 'object') return { plan: s.plan || s.name || 'Aurix Free', renew: s.renew || 'N/A' };
+        return { plan: 'Aurix Free', renew: 'N/A' };
+      })
+    : [{ plan: 'Aurix Free', renew: 'N/A' }];
 
   const result = await devicesCol.updateOne(
     { device_id },
@@ -16,11 +24,8 @@ async function registerDevice(device_id, computer_name, os_name, version, userna
         version: version || null,
         username: username || null,
         email: email || null,
-        // Ensure at least the default free subscription is present
-        subscriptions: Array.isArray(subscriptions) && subscriptions.length > 0 ? subscriptions : ["Aurix Free"],
-        // store a simple plan/renewal fields for quick UI use
-        subscription_plan: Array.isArray(subscriptions) && subscriptions.length > 0 ? subscriptions[0] : "Aurix Free",
-        subscription_renew: "N/A",
+        // Store normalized subscription objects
+        subscriptions: normalizedSubs,
         is_online: true,
         last_seen: new Date()
       }
