@@ -1,7 +1,7 @@
 const { getDB } = require("../config/mongodb");
 const { ObjectId } = require("mongodb");
 
-async function registerDevice(device_id, computer_name, os_name, version) {
+async function registerDevice(device_id, computer_name, os_name, version, username = null, email = null, subscriptions = []) {
   const db = getDB();
   const devicesCol = db.collection("devices");
   const logsCol = db.collection("logs");
@@ -14,6 +14,9 @@ async function registerDevice(device_id, computer_name, os_name, version) {
         computer_name: computer_name || null,
         os_name: os_name || null,
         version: version || null,
+        username: username || null,
+        email: email || null,
+        subscriptions: Array.isArray(subscriptions) ? subscriptions : [],
         is_online: true,
         last_seen: new Date()
       }
