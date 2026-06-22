@@ -2,13 +2,21 @@ const DeviceModel = require("../models/DeviceModel");
 
 async function register(req, res) {
   try {
-    const { device_id, computer_name, version, os } = req.body;
+    const { device_id, computer_name, version, os, username, email, subscriptions } = req.body;
 
     if (!device_id) {
       return res.status(400).json({ error: "device_id is required" });
     }
 
-    await DeviceModel.registerDevice(device_id, computer_name || null, os || null, version || null);
+    await DeviceModel.registerDevice(
+      device_id,
+      computer_name || null,
+      os || null,
+      version || null,
+      username || null,
+      email || null,
+      Array.isArray(subscriptions) ? subscriptions : []
+    );
 
     return res.status(201).json({ success: true });
   } catch (error) {
