@@ -6,7 +6,8 @@ async function registerDevice(device_id, computer_name, os_name, version, userna
   const devicesCol = db.collection("devices");
   const logsCol = db.collection("logs");
   // Normalize subscriptions into objects { plan, renew }
-  const normalizedSubs = Array.isArray(subscriptions) && subscriptions.length > 0
+  const hasProvidedSubs = Array.isArray(subscriptions) && subscriptions.length > 0;
+  const normalizedSubs = hasProvidedSubs
     ? subscriptions.map((s) => {
         if (typeof s === 'string') return { plan: s, renew: 'N/A' };
         if (s && typeof s === 'object') return { plan: s.plan || s.name || 'Aurix Free', renew: s.renew || 'N/A' };
@@ -14,22 +15,31 @@ async function registerDevice(device_id, computer_name, os_name, version, userna
       })
     : [{ plan: 'Aurix Free', renew: 'N/A' }];
 
+  // Build update document so we don't overwrite existing subscriptions when upserting.
+  // If subscriptions were provided by the client, set them. Otherwise, only set a default
+  // subscription on insert to avoid overwriting an existing subscription on update.
+  const updateDoc = {
+    $set: {
+      device_id,
+      computer_name: computer_name || null,
+      os_name: os_name || null,
+      version: version || null,
+      username: username || null,
+      email: email || null,
+      is_online: true,
+      last_seen: new Date()
+    }
+  };
+
+  if (hasProvidedSubs) {
+    updateDoc.$set.subscriptions = normalizedSubs;
+  } else {
+    updateDoc.$setOnInsert = { subscriptions: normalizedSubs };
+  }
+
   const result = await devicesCol.updateOne(
     { device_id },
-    {
-      $set: {
-        device_id,
-        computer_name: computer_name || null,
-        os_name: os_name || null,
-        version: version || null,
-        username: username || null,
-        email: email || null,
-        // Store normalized subscription objects
-        subscriptions: normalizedSubs,
-        is_online: true,
-        last_seen: new Date()
-      }
-    },
+    updateDoc,
     { upsert: true }
   );
 
