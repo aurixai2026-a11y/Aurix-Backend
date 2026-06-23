@@ -32,6 +32,12 @@ async function createAdminUser(username, password_hash) {
     username,
     email: null,
     password_hash,
+    subscription: {
+      plan: "Free",
+      status: "active",
+      renewalDate: null,
+      createdAt: new Date()
+    },
     createdAt: new Date(),
     updatedAt: new Date()
   });
@@ -84,6 +90,48 @@ async function getUserByUsername(username) {
   return await usersCol.findOne({ username });
 }
 
+// ===== Subscription Management Functions =====
+async function getUserByEmail(email) {
+  const db = getDB();
+  const usersCol = db.collection("users");
+
+  return await usersCol.findOne({ email });
+}
+
+async function getUserById(userId) {
+  const db = getDB();
+  const usersCol = db.collection("users");
+
+  return await usersCol.findOne({ _id: new ObjectId(userId) });
+}
+
+async function updateUserSubscription(userId, planName, renewalDate = null) {
+  const db = getDB();
+  const usersCol = db.collection("users");
+
+  const result = await usersCol.findOneAndUpdate(
+    { _id: new ObjectId(userId) },
+    {
+      $set: {
+        subscription: {
+          plan: planName,
+          status: "active",
+          renewalDate: renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+          updatedAt: new Date()
+        },
+        updatedAt: new Date()
+      }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!result.value) {
+    throw new Error("User not found");
+  }
+
+  return result.value;
+}
+
 module.exports = {
   getAdminUser,
   getAllUsers,
@@ -91,5 +139,7 @@ module.exports = {
   createAdminUser,
   updateAdminUser,
   deleteAdminUser,
-  getUserByUsername
+  getUserByUsername,
+  getUserByEmail,
+  updateUserSubscription
 };
