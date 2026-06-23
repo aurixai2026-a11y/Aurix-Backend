@@ -38,9 +38,11 @@ async function searchUser(req, res) {
             subscription: device.subscriptions && device.subscriptions[0] 
               ? {
                   plan: device.subscriptions[0].plan || "Free",
-                  status: "active"
+                  status: "active",
+                  // Normalize renewal field names that may differ between collections
+                  renewalDate: device.subscriptions[0].renew || device.subscriptions[0].renewalDate || null
                 }
-              : { plan: "Free", status: "active" },
+              : { plan: "Free", status: "active", renewalDate: null },
             createdAt: device.last_seen || new Date()
           };
         }
@@ -62,12 +64,13 @@ async function searchUser(req, res) {
             username: device.username || "Device User",
             email: device.email || null,
             device_id: device.device_id,
-            subscription: device.subscriptions && device.subscriptions[0] 
+            subscription: device.subscriptions && device.subscriptions[0]
               ? {
                   plan: device.subscriptions[0].plan || "Free",
-                  status: "active"
+                  status: "active",
+                  renewalDate: device.subscriptions[0].renew || device.subscriptions[0].renewalDate || null
                 }
-              : { plan: "Free", status: "active" },
+              : { plan: "Free", status: "active", renewalDate: null },
             createdAt: device.last_seen || new Date()
           };
         }
