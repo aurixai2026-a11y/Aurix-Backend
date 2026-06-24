@@ -140,7 +140,7 @@ async function updateSubscription(req, res) {
       return res.status(400).json({ error: "Plan name is required" });
     }
 
-    const validPlans = ["Free", "Aurix Pro", "Aurix Ultimate", "Aurix Pro Plus", "Aurix Ultimate Plus"];
+    const validPlans = ["Aurix Free", "Aurix Pro", "Aurix Ultimate", "Aurix Pro Plus", "Aurix Ultimate Plus"];
     if (!validPlans.includes(plan)) {
       return res.status(400).json({ error: `Invalid plan. Allowed: ${validPlans.join(", ")}` });
     }
