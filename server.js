@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const { connectDB, closeDB } = require("./config/mongodb");
 const { ensureDefaultAdmin } = require("./services/adminAuthService");
@@ -43,6 +44,7 @@ app.use("/api/updates", require("./routes/updateRoutes"));
 app.get("/api/devices", requireAdmin, deviceController.list);
 app.use("/api/user", require("./routes/userRoutes"));
 app.use("/api/chat", require("./routes/chatRoutes"));
+app.use("/api", require("./routes/paymentRoutes"));
 
 // Health check
 app.get("/health", (req, res) => {
