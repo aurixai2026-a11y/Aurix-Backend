@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 const allowedOrigins = new Set([
   "https://aurix-dashboard.netlify.app",
   "https://aurix-dev.netlify.app",
+  "https://aurixai.tech",
   "http://localhost:3000",
   "http://localhost:5173",
   "http://127.0.0.1:5500"
