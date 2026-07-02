@@ -17,9 +17,9 @@ npm install
 
 2. Configure environment variables in `.env`:
 ```
-NODE_ENV=production
-PORT=3000
-MONGO_URI=mongodb+srv://aurixai2026_db_user:BTNNXyAiyMMOfPcb@aurix.mongodb.net/aurix?retryWrites=true&w=majority
+NODE_ENV=xxx
+PORT=xxx
+MONGO_URI=xxxxx
 ```
 
 3. Start the server:
@@ -55,8 +55,8 @@ npm run dev
 - `GET /health` - Health check
 
 ## Default Admin
-- Username: `admin`
-- Password: `admin123`
+- Username: `xxxx`
+- Password: `xxxxxx`
 
 **Change this immediately in production!**
 
