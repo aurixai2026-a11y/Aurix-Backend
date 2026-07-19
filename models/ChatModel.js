@@ -9,6 +9,7 @@ async function createChat(title, messages = [], device_id = null) {
     title: title || "Untitled Chat",
     messages,
     device_id: device_id || null,
+    pinned: false,
     created_at: new Date(),
     updated_at: new Date()
   };
@@ -38,12 +39,37 @@ async function listChats(limit = 50, skip = 0, device_id = null) {
   if (device_id) query.device_id = device_id;
 
   const items = await chats.find(query)
-    .sort({ updated_at: -1 })
+    .sort({ pinned: -1, updated_at: -1 })
     .skip(parseInt(skip))
     .limit(parseInt(limit))
     .toArray();
 
   return items;
+}
+
+async function updateChat(id, updates = {}) {
+  const db = getDB();
+  const chats = db.collection("chats");
+
+  const safeUpdates = {};
+  if (typeof updates.title === "string") {
+    safeUpdates.title = updates.title.trim() || "Untitled Chat";
+  }
+  if (typeof updates.pinned === "boolean") {
+    safeUpdates.pinned = updates.pinned;
+  }
+
+  if (Object.keys(safeUpdates).length === 0) {
+    return null;
+  }
+
+  const result = await chats.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: { ...safeUpdates, updated_at: new Date() } },
+    { returnDocument: "after" }
+  );
+
+  return result.value;
 }
 
 async function getChatById(id) {
@@ -65,6 +91,7 @@ module.exports = {
   createChat,
   addMessage,
   listChats,
+  updateChat,
   getChatById,
   deleteChat
 };

@@ -47,6 +47,18 @@ async function getChat(req, res) {
   }
 }
 
+async function updateChat(req, res) {
+  try {
+    const { id } = req.params;
+    const updated = await ChatModel.updateChat(id, req.body || {});
+    if (!updated) return res.status(404).json({ error: "Chat not found" });
+    return res.json(updated);
+  } catch (error) {
+    console.error("Update chat error:", error);
+    return res.status(500).json({ error: "Failed to update chat" });
+  }
+}
+
 async function deleteChat(req, res) {
   try {
     const { id } = req.params;
@@ -64,5 +76,6 @@ module.exports = {
   addMessage,
   listChats,
   getChat,
+  updateChat,
   deleteChat
 };
